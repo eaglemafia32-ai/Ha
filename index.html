@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EAGLE VIP SERVER</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --bg-light: #F0F2F5;
+            --bg-transparent-light: rgba(255, 255, 255, 0.9);
+            --border-light: rgba(0, 0, 0, 0.1);
+            --primary-color: #007BFF;
+            --accent-color: #6F42C1;
+            --text-dark: #333333;
+            --text-muted: #6C757D;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --win-color: #28A745;
+            --loss-color: #DC3545;
+            --pending-color: #FFC107;
+            --win-jk-color: #6610F2;
+            
+            --big-color: #FF5733; /* Orange-Red for Big */
+            --small-color: #3399FF; /* Blue for Small */
+            --big-shadow: rgba(255, 87, 51, 0.5);
+            --small-shadow: rgba(51, 153, 255, 0.5);
+            --green-num: var(--win-color);
+            --red-num: var(--loss-color);
+            
+            --header-gradient: linear-gradient(90deg, #FF6F61, #FFD700, #32CD32, #1E90FF, #6F42C1);
+            --header-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            font-family: 'Josefin Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            overflow: hidden;
+            position: relative;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .background-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .star-fragment {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            box-shadow: 0 0 25px rgba(255, 255, 255, 1), 0 0 40px rgba(255, 255, 255, 0.9);
+            animation: fallStar 6s ease-in-out infinite;
+            -webkit-animation: fallStar 6s ease-in-out infinite;
+            opacity: 0;
+        }
+
+        @keyframes fallStar {
+            0% {
+                transform: translateY(-100vh);
+                -webkit-transform: translateY(-100vh);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh);
+                -webkit-transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+
+        .cosmic-wave {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                45deg,
+                rgba(0, 123, 255, 0.2),
+                rgba(111, 66, 193, 0.2),
+                rgba(255, 105, 180, 0.2),
+                rgba(0, 123, 255, 0.2)
+            );
+            background-size: 400%;
+            opacity: 0.3;
+            animation: waveFlow 10s linear infinite;
+            -webkit-animation: waveFlow 10s linear infinite;
+            z-index: -2;
+        }
+
+        @keyframes waveFlow {
+            0% {
+                background-position: 0% 0%;
+            }
+            50% {
+                background-position: 400% 400%;
+            }
+            100% {
+                background-position: 0% 0%;
+            }
+        }
+
+        .hidden { display: none !important; }
+
+        .maintenance-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            flex-direction: column;
+            color: #ffffff;
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+        .maintenance-overlay span { font-size: 3rem; margin-bottom: 20px; color: var(--primary-color); }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 10;
+            animation: fadeInScaleUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+        @keyframes fadeInScaleUp {
+            from { opacity: 0; transform: scale(0.9) translateY(30px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .login-box {
+            background: var(--bg-transparent-light);
+            border-radius: 20px;
+            border: 1px solid var(--border-light);
+            box-shadow: 0 10px 30px var(--shadow-color);
+            padding: 40px;
+            text-align: center;
+        }
+        .title { font-size: 2.5em; color: var(--primary-color); font-weight: 700; text-shadow: 0 0 10px rgba(0, 123, 255, 0.2); }
+        .subtitle { font-size: 1em; color: var(--text-muted); margin-bottom: 30px; font-weight: 700; }
+        .input-group { margin-bottom: 25px; position: relative; }
+        .input-group i {
+            position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: var(--text-muted);
+            transition: color 0.3s ease;
+        }
+        input[type="password"] {
+            width: 100%; padding: 18px 20px 18px 60px; border: 2px solid var(--border-light); border-radius: 12px;
+            background: rgba(255, 255, 255, 0.6); color: var(--text-dark); font-size: 1.1em; box-sizing: border-box;
+            transition: all 0.3s ease;
+            font-weight: 700;
+        }
+        input[type="password"]:focus {
+            border-color: var(--primary-color); outline: none; box-shadow: 0 0 10px rgba(0, 123, 255, 0.4);
+            background: rgba(255, 255, 255, 0.9);
+        }
+        .btn {
+            display: block; width: 100%; padding: 18px; border: none; border-radius: 12px; font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); text-decoration: none; color: #ffffff;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+        .btn-login { background: linear-gradient(45deg, var(--primary-color), var(--accent-color)); }
+        .btn-login:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 10px 25px rgba(0, 123, 255, 0.2); }
+        .btn-telegram {
+            display: inline-flex; justify-content: center; align-items: center; gap: 10px;
+            background: linear-gradient(45deg, #0088cc, #0077b3); color: #ffffff; padding: 14px 28px; font-size: 1em;
+            box-shadow: 0 6px 20px rgba(0, 136, 204, 0.1); margin-top: 25px; border-radius: 12px;
+            width: auto;
+        }
+        .btn-telegram:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0, 136, 204, 0.2); }
+        .divider { margin: 30px 0; display: flex; align-items: center; color: var(--text-muted); font-weight: 700; }
+        .divider::before, .divider::after { content: ''; flex-grow: 1; height: 1px; background-color: var(--border-light); }
+        .divider span { padding: 0 16px; }
+        .footer-text { font-size: 0.85em; color: var(--text-muted); margin-top: 30px; font-weight: 700; }
+        .login-message { margin-top: 15px; font-size: 0.95em; color: var(--loss-color); font-weight: 700; }
+
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            text-align: center;
+            padding: 22px 0;
+            background: var(--header-gradient);
+            color: #ffffff;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            box-shadow: var(--header-shadow);
+        }
+        .header-text { 
+            font-size: 28px; 
+            font-weight: 900;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4); 
+            letter-spacing: 1px;
+        }
+
+        .main-container {
+            width: 100vw;
+            max-width: 450px;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background-color: transparent;
+            box-shadow: none;
+            z-index: 2;
+        }
+        .app-content {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        .page-section {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: transparent;
+            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            transform: translateX(100%);
+            display: flex;
+            flex-direction: column;
+        }
+        .page-section.active { transform: translateX(0); }
+        #home.page-section { z-index: 2; }
+        #history.page-section { z-index: 1; }
+        #contact.page-section { z-index: 1; }
+        .home-content, .history-content-wrapper, .contact-content {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* --- START UI/UX MODIFICATION: New Home Layout & Timer Styling --- */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+        .prediction-card-wrapper {
+            margin-bottom: 25px;
+        }
+        .prediction-box {
+            width: 100%;
+            overflow: hidden;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: var(--bg-transparent-light);
+            border: 1px solid var(--border-light);
+            box-shadow: 0 6px 20px var(--shadow-color);
+            border-radius: 16px;
+            padding-bottom: 15px;
+        }
+        
+        .info-card {
+            background-color: var(--bg-transparent-light);
+            border: 1px solid var(--border-light);
+            box-shadow: 0 6px 20px var(--shadow-color);
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+            animation: fadeIn 0.8s ease-out;
+            transition: transform 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .info-card:hover { transform: translateY(-5px); }
+        .info-card-title {
+            font-size: 0.95em;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        /* TIMER CIRCLE STYLES */
+        .timer-circle-container {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+        .timer-circle-svg {
+            transform: rotate(-90deg);
+        }
+        .timer-circle-track {
+            stroke: var(--border-light);
+            fill: none;
+            stroke-width: 5;
+        }
+        .timer-circle-progress {
+            stroke: var(--primary-color);
+            fill: none;
+            stroke-width: 5;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s linear;
+        }
+        .timer-circle-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.4em;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        /* Prediction Card Styling (Fixed and enhanced look) */
+        .prediction-box .info-card-title {
+            margin-top: 15px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            color: var(--primary-color);
+        }
+
+        .prediction-category-container {
+            width: 100%;
+            padding: 15px 20px; 
+            color: #ffffff;
+            font-size: 1.8em; 
+            font-weight: 700;
+            text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.4);
+            transition: background-color 0.5s ease, box-shadow 0.5s ease;
+            text-align: center;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            transform: scale(0.95);
+        }
+        .prediction-category-container.big {
+            background: linear-gradient(135deg, var(--big-color), #ff8c6b);
+            box-shadow: 0 4px 15px var(--big-shadow);
+        }
+        .prediction-category-container.small {
+            background: linear-gradient(135deg, var(--small-color), #66b3ff);
+            box-shadow: 0 4px 15px var(--small-shadow);
+        }
+        .prediction-category-container.wait {
+            background: linear-gradient(135deg, var(--text-muted), #999999);
+        }
+
+        .prediction-numbers-container {
+            width: 100%;
+            padding: 0 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .prediction-numbers-title {
+            font-size: 0.8em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .prediction-numbers {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            font-weight: 700;
+        }
+        .predicted-number-badge {
+            font-size: 1.5em;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .predicted-number-badge:hover { transform: scale(1.1); }
+        .predicted-number-badge.red-num { background-color: var(--red-num); }
+        .predicted-number-badge.green-num { background-color: var(--green-num); }
+        .predicted-number-badge.na-num { background-color: var(--text-muted); }
+        /* --- END PREDICTION CARD STYLING --- */
+
+
+        .info-card-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
+        }
+        /* --- END UI/UX MODIFICATION: New Home Layout & Timer Styling --- */
+
+        .section-title { font-size: 1.2em; font-weight: 700; margin-bottom: 15px; }
+
+        /* Styles for Live Track and History */
+        #recent-results-section {
+            background-color: var(--bg-transparent-light);
+            border: 1px solid var(--border-light);
+            box-shadow: 0 6px 20px var(--shadow-color);
+            padding: 25px;
+            border-radius: 16px;
+            margin-top: 25px;
+            animation: fadeIn 1s ease-out;
+            margin-bottom: 25px;
+        }
+
+        .recent-results-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .recent-result-item {
+             display: flex;
+             align-items: center;
+             background-color: rgba(255, 255, 255, 0.6);
+             padding: 10px;
+             border-radius: 10px;
+             box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .result-number {
+            font-size: 1.2em;
+            font-weight: 700;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            flex-shrink: 0;
+        }
+        .result-number.red { background-color: var(--loss-color); }
+        .result-number.green { background-color: var(--win-color); }
+
+        .result-info {
+            flex-grow: 1;
+            text-align: left;
+            padding-left: 15px;
+        }
+        .result-info span {
+            display: block;
+        }
+        .result-period {
+            font-size: 0.8em;
+            color: var(--text-muted);
+        }
+        .result-category {
+            font-size: 1em;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        /* --- HISTORY CARD STYLES (Fixed and enhanced look) --- */
+        .history-card {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            background-color: var(--bg-transparent-light);
+            border: 1px solid var(--border-light);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            font-size: 1em;
+            transition: transform 0.2s ease;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .history-card:hover { transform: translateX(3px); }
+        
+        .history-card.win { border-left: 5px solid var(--win-color); background-color: rgba(40, 167, 69, 0.05); }
+        .history-card.loss { border-left: 5px solid var(--loss-color); background-color: rgba(220, 53, 69, 0.05); }
+        .history-card.pending { border-left: 5px solid var(--pending-color); background-color: rgba(255, 193, 7, 0.05); }
+        .history-card.win-jk { border-left: 5px solid var(--win-jk-color); background-color: rgba(102, 16, 242, 0.08); }
+
+
+        .history-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .history-content span {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 0.9em;
+        }
+        .history-content i {
+            font-size: 16px;
+            color: var(--text-muted);
+            width: 15px;
+        }
+        .history-content .value {
+            color: var(--text-dark);
+            font-weight: 700;
+        }
+        .history-prediction-details {
+            font-size: 0.9em;
+            color: var(--text-dark);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .history-prediction-details i {
+            color: var(--accent-color);
+        }
+
+        .history-status-badge {
+            grid-column: 2;
+            font-size: 0.9em;
+            font-weight: 700;
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: white;
+            text-align: center;
+            min-width: 80px;
+        }
+        .history-status-badge.win { background-color: var(--win-color); }
+        .history-status-badge.loss { background-color: var(--loss-color); }
+        .history-status-badge.pending { background-color: var(--pending-color); }
+        .history-status-badge.win-jk { background-color: var(--win-jk-color); }
+
+        /* --- END HISTORY CARD STYLES --- */
+
+
+        .nav-buttons { display: flex; justify-content: space-around; padding: 15px; background-color: var(--bg-transparent-light); border-top: 1px solid var(--border-light); }
+        .nav-buttons button {
+            background: transparent; color: var(--text-muted); padding: 12px 18px; border-radius: 10px;
+            border: none; font-size: 0;
+            text-align: center; cursor: pointer; transition: all 0.3s ease;
+            display: flex; flex-direction: column; align-items: center;
+            font-weight: 700;
+        }
+        .nav-buttons button i { font-size: 26px; margin-bottom: 0; }
+        .nav-buttons button.active { color: var(--primary-color); background: rgba(0, 123, 255, 0.1); }
+        .nav-buttons button:hover { transform: translateY(-5px); color: var(--primary-color); }
+
+        .history-scroll-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-right: 8px;
+        }
+        .history-scroll-container::-webkit-scrollbar { width: 8px; }
+        .history-scroll-container::-webkit-scrollbar-thumb { background-color: var(--primary-color); border-radius: 4px; }
+        .history-scroll-container::-webkit-scrollbar-track { background-color: transparent; }
+
+        .clear-btn { background: var(--loss-color); color: #ffffff; border: none; padding: 12px 20px; margin-top: 20px; border-radius: 10px; font-weight: 700; transition: background-color 0.3s ease; width: 100%; box-sizing: border-box; }
+        .clear-btn:hover { background: #e35489; }
+
+        .win-trophy, .loss-signal, .pending-spinner { display: inline-block; }
+        .pending-spinner::before { content: '\f110'; font-family: 'Font Awesome 6 Free'; font-weight: 700; color: var(--pending-color); animation: spin 1s linear infinite; }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .notification {
+            position: fixed; top: 30px; left: 50%; transform: translateX(-50%); padding: 12px 25px;
+            border-radius: 10px; font-weight: 700; color: #ffffff; z-index: 1000;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            animation: fadeInOut 3s ease-in-out forwards;
+        }
+        .notification.win { background-color: var(--win-color); }
+        .notification.loss { background-color: var(--loss-color); }
+        .notification.color-mode { background-color: var(--primary-color); }
+        @keyframes fadeInOut { 0% { opacity: 0; transform: translate(-50%, -20px); } 10% { opacity: 1; transform: translate(-50%, 0); } 90% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -20px); } }
+
+        .win-streak-badge {
+            position: fixed; top: 30px; right: 30px; background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            color: #ffffff; padding: 8px 16px; font-size: 14px; font-weight: 700;
+            border-radius: 8px; box-shadow: 0 0 15px rgba(0, 123, 255, 0.2); animation: popBadge 0.4s ease, glowPulse 1s infinite;
+            z-index: 9999;
+        }
+        @keyframes popBadge { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes glowPulse { 0%, 100% { box-shadow: 0 0 15px rgba(0, 123, 255, 0.2); } 50% { box-shadow: 0 0 20px rgba(0, 123, 255, 0.4); } }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(240, 242, 245, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .loading-box {
+            background: var(--bg-transparent-light);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            text-align: center;
+            animation: scaleUp 0.5s ease-in-out;
+        }
+        .loading-text {
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+        }
+        .progress-bar {
+            width: 200px;
+            height: 10px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            width: 0;
+            transition: width 3s linear;
+        }
+
+        .win-glow {
+            animation: glow-pulse 1s infinite alternate;
+        }
+        @keyframes glow-pulse {
+            0% { box-shadow: 0 0 10px rgba(40, 167, 69, 0.3); }
+            100% { box-shadow: 0 0 20px rgba(40, 167, 69, 0.6), 0 0 30px rgba(40, 167, 69, 0.4); }
+        }
+
+        .about-me-section {
+            background-color: var(--bg-transparent-light);
+            border: 1px solid var(--border-light);
+            box-shadow: 0 6px 20px var(--shadow-color);
+            padding: 20px;
+            border-radius: 16px;
+            margin-top: 25px;
+            animation: fadeIn 1s ease-out;
+        }
+        .about-me-section h2 {
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .about-me-section p {
+            font-weight: 400;
+            line-height: 1.5;
+            text-transform: none;
+            font-size: 0.9em;
+        }
+        
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 999;
+            pointer-events: none;
+        }
+
+        @media (max-width: 450px) {
+            .main-container { width: 100vw; height: 100vh; max-width: 100%; }
+            .page-section { padding: 15px; }
+            .info-grid { 
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            .info-card {
+                padding: 15px;
+            }
+            .info-card-value {
+                font-size: 1.6em;
+            }
+            .history-content-wrapper { max-height: calc(100vh - 160px); }
+            .history-section { padding: 15px; }
+            
+            .prediction-category-container {
+                font-size: 1.6em;
+                padding: 12px 15px;
+            }
+            .predicted-number-badge {
+                font-size: 1.2em;
+                width: 40px;
+                height: 40px;
+            }
+            .history-card {
+                padding: 12px;
+            }
+            .history-content span, .history-prediction-details {
+                font-size: 0.85em;
+            }
+            .history-status-badge {
+                padding: 6px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="confetti-canvas" style="display: none;"></canvas>
+
+    <div class="background-animation" id="background-animation">
+        <div class="cosmic-wave"></div>
+    </div>
+
+    <div id="maintenance-overlay" class="maintenance-overlay hidden">
+        <span><i class="fas fa-tools"></i></span>
+        <div>SERVER UNDER MAINTENANCE PLEASE WAIT</div>
+    </div>
+
+    <div id="login-page" class="login-container">
+        <div class="login-box">
+            <h1 class="title">SECURE ACCESS</h1>
+            <p class="subtitle">ENTER YOUR LOGIN KEY TO PROCEED.</p>
+            <form class="login-form">
+                <div class="input-group">
+                    <i class="fas fa-key"></i>
+                    <input type="password" id="loginKey" placeholder="ENTER LOGIN KEY" required>
+                </div>
+                <button type="submit" class="btn btn-login">LOGIN</button>
+                <div id="login-message" class="login-message"></div>
+            </form>
+            <div class="divider">
+                <span>OR</span>
+            </div>
+            <a href="https://t.me/cvf_kutti" class="btn btn-telegram" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-telegram-plane"></i> DM TO BUY
+            </a>
+            <p class="footer-text">NEED HELP? CONTACT SUPPORT.</p>
+        </div>
+    </div>
+
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-box">
+            <div class="loading-text">CONNECTING TO SERVER</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-page" class="hidden">
+        <div class="main-container">
+            <div class="header">
+                <div class="header-text">EAGLE VIP SERVER</div>
+            </div>
+            <div class="nav-buttons">
+                <button id="home-btn" onclick="showPage('home')">
+                    <i class="fas fa-satellite-dish"></i>
+                </button>
+                <button id="history-btn" onclick="showPage('history')">
+                    <i class="fas fa-chart-line"></i>
+                </button>
+                <button id="contact-btn" onclick="showPage('contact')">
+                    <i class="fas fa-envelope"></i>
+                </button>
+            </div>
+            <div class="app-content">
+                <div id="home" class="page-section active">
+                    <div class="home-content">
+                        <div class="prediction-card-wrapper prediction-box" id="prediction-card">
+                            <span class="info-card-title">PREDICTION</span>
+                            </div>
+                        <div class="info-grid">
+                            <div class="info-card">
+                                <span class="info-card-title">PERIOD</span>
+                                <span id="periodNumber" class="info-card-value">LOADING...</span>
+                            </div>
+                            <div class="info-card">
+                                <span class="info-card-title">TIME LEFT</span>
+                                <div class="timer-circle-container">
+                                    <svg class="timer-circle-svg" width="80" height="80" viewport="0 0 80 80" version="1.1" xmlns="http://www.w3.org/2000/svg">
+                                        <circle class="timer-circle-track" r="35" cx="40" cy="40"></circle>
+                                        <circle id="timerCircleProgress" class="timer-circle-progress" r="35" cx="40" cy="40" style="stroke-dasharray: 219.91; stroke-dashoffset: 219.91;"></circle>
+                                    </svg>
+                                    <span id="timer" class="timer-circle-text">00:00</span>
+                                </div>
+                                </div>
+                        </div>
+                        
+                        <div id="recent-results-section">
+                            <div class="section-title"><i class="fas fa-sync-alt"></i> LIVE TRACK RECENT RESULTS</div>
+                            <ul id="liveTrackResultsList" class="recent-results-list">
+                                <li class="recent-result-item">LOADING...</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div id="history" class="page-section">
+                    <div class="history-content-wrapper">
+                        <div class="history-section">
+                            <div class="section-title">PREDICTION HISTORY</div>
+                            <div id="historyBody" class="history-scroll-container"></div>
+                            <button class="clear-btn" onclick="clearHistory()">
+                                <i class="fas fa-trash-alt"></i> CLEAR HISTORY
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="contact" class="page-section">
+                    <div class="contact-content">
+                        <div class="info-card">
+                            <h2 class="section-title"><i class="fas fa-handshake"></i> GET IN TOUCH</h2>
+                            <p style="text-align: left; font-weight: 400; font-size: 0.9em; color: var(--text-dark); text-transform: none;">
+                                For support, business inquiries, or to purchase a key, please contact us via Telegram.
+                            </p>
+                            <ul style="text-align: left; list-style-type: none; padding: 0; font-weight: 500;">
+                                <li style="margin-bottom: 10px;">
+                                    <i class="fab fa-telegram-plane" style="color: #0088cc;"></i>
+                                    TELEGRAM: <a href="https://t.me/error_2nd" target="_blank" rel="noopener noreferrer" style="color: var(--primary-color); text-decoration: none;">@error_2nd</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="about-me-section">
+                            <h2 class="section-title"><i class="fas fa-info-circle"></i> ABOUT ME</h2>
+                            <p>
+                                I am the developer of ERROR X ADVANCE, a tool created to provide users with data-driven insights. My mission is to build robust, secure, and highly accurate applications that empower users with information. This tool represents my commitment to innovation and excellence in predictive analysis.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="win-streak-badge" class="win-streak-badge hidden"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/js-confetti@latest/dist/js-confetti.browser.js"></script>
+    <script>
+        // Star fragment animation logic (kept for background effect)
+        function initializeStarAnimation() {
+            const backgroundAnimationContainer = document.getElementById('background-animation');
+            const numStarsPerInterval = 4;
+            const colors = ['#FFD700', '#FF4500', '#00FF7F', '#1E90FF', '#FF69B4'];
+
+            function createStarFragment() {
+                const star = document.createElement('div');
+                star.classList.add('star-fragment');
+                star.style.left = `${Math.random() * 100}vw`;
+                star.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                star.style.animationDelay = `${Math.random() * 1}s`;
+
+                backgroundAnimationContainer.appendChild(star);
+
+                // Remove star after animation to prevent DOM buildup
+                setTimeout(() => {
+                    star.remove();
+                }, 6000);
+            }
+
+            // Create initial stars immediately
+            for (let i = 0; i < 10; i++) {
+                createStarFragment();
+            }
+
+            // Create stars every 400ms for continuous effect
+            setInterval(() => {
+                for (let i = 0; i < numStarsPerInterval; i++) {
+                    createStarFragment();
+                }
+            }, 400);
+        }
+
+        // Run star animation immediately
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeStarAnimation();
+        });
+
+        // Fallback: Run immediately if DOM is already loaded
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            initializeStarAnimation();
+        }
+
+        // Firebase and prediction logic
+        const firebaseConfig = {
+            apiKey: "AIzaSyBG1ZPt3VMGIKuGflHdRecSZHx5puY99Xs",
+            authDomain: "error-57ad4.firebaseapp.com",
+            databaseURL: "https://error-57ad4-default-rtdb.firebaseio.com",
+            projectId: "error-57ad4",
+            storageBucket: "error-57ad4.appspot.com",
+            messagingSenderId: "445412492654",
+            appId: "1:445412492654:android:2e75c3341086e4eb9a6d7f"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const KEYS_DB_PATH = 'admin_panels/panelA/keys';
+        const SERVER_STATUS_PATH = 'serverStatus';
+        const loginMessageElement = document.getElementById('login-message');
+        const LIVE_TRACK_RESULTS_LIST = document.getElementById('liveTrackResultsList');
+
+        let logoutTimerId = null;
+
+        function getDeviceId() {
+            let deviceId = localStorage.getItem('deviceId');
+            if (!deviceId) {
+                deviceId = 'device_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('deviceId', deviceId);
+            }
+            return deviceId;
+        }
+
+        function showMaintenance() {
+            document.getElementById('maintenance-overlay').classList.remove('hidden');
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('main-page').classList.add('hidden');
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }
+
+        function showLogin() {
+            document.getElementById('maintenance-overlay').classList.add('hidden');
+            document.getElementById('login-page').classList.remove('hidden');
+            document.getElementById('main-page').classList.add('hidden');
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }
+
+        function showMain() {
+            document.getElementById('maintenance-overlay').classList.add('hidden');
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('main-page').classList.remove('hidden');
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }
+
+        function showLoading() {
+            document.getElementById('maintenance-overlay').classList.add('hidden');
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('main-page').classList.add('hidden');
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            const progressBar = document.getElementById('progress-fill');
+            progressBar.style.width = '0%';
+            setTimeout(() => {
+                progressBar.style.width = '100%';
+            }, 50);
+            setTimeout(() => {
+                showMain();
+            }, 3000);
+        }
+
+        function showLoginMessage(message) {
+            loginMessageElement.textContent = message;
+            loginMessageElement.style.color = '#dc3545';
+        }
+
+        function validateKey(key, deviceId, callback) {
+            database.ref(KEYS_DB_PATH + '/' + key).once('value').then((snapshot) => {
+                const keyData = snapshot.val();
+                if (!keyData || keyData.active === false) {
+                    callback(false, 'Invalid key');
+                    return;
+                }
+                const now = Date.now();
+                if (keyData.expireAt < now) {
+                    callback(false, 'Key expired');
+                    return;
+                }
+                const devices = keyData.devices || {};
+                const deviceCount = Object.keys(devices).length;
+
+                if (keyData.deviceLimit === undefined) keyData.deviceLimit = 1; // Default limit if not set
+
+                if (devices[deviceId]) {
+                    callback(true, keyData);
+                    return;
+                }
+
+                if (deviceCount >= keyData.deviceLimit) {
+                    callback(false, 'Device limit reached');
+                    return;
+                }
+                callback(true, keyData);
+            }).catch((error) => {
+                console.error('Error validating key:', error);
+                callback(false, 'Error validating key');
+            });
+        }
+
+        function addDeviceToKey(key, deviceId) {
+            const timestamp = new Date().toISOString();
+            database.ref(KEYS_DB_PATH + '/' + key + '/devices').update({ [deviceId]: true });
+            database.ref(KEYS_DB_PATH + '/' + key + '/loginHistory').push({ timestamp: timestamp, deviceId: deviceId });
+        }
+
+        database.ref(SERVER_STATUS_PATH).on('value', (snap) => {
+            if (snap.exists() && snap.val() === 'off') {
+                showMaintenance();
+            } else {
+                const savedKey = localStorage.getItem('loginKey');
+                const deviceId = getDeviceId();
+                if (savedKey) {
+                    validateKey(savedKey, deviceId, (valid, keyData) => {
+                        if (valid) {
+                            if (logoutTimerId) {
+                                clearTimeout(logoutTimerId);
+                            }
+                            const expiryTimeout = keyData.expireAt - Date.now();
+                            logoutTimerId = setTimeout(() => {
+                                showLogin();
+                                logoutTimerId = null;
+                            }, expiryTimeout);
+
+                            showLoading();
+                        } else {
+                            localStorage.removeItem('loginKey');
+                            showLogin();
+                        }
+                    });
+                } else {
+                    showLogin();
+                }
+            }
+        });
+
+        document.querySelector('.login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const loginKey = document.getElementById('loginKey').value.trim();
+            const deviceId = getDeviceId();
+            loginMessageElement.textContent = '';
+
+            database.ref(SERVER_STATUS_PATH).once('value').then((snap) => {
+                if (snap.exists() && snap.val() === 'off') {
+                    showMaintenance();
+                    return;
+                }
+                validateKey(loginKey, deviceId, (valid, keyData) => {
+                    if (!valid) {
+                        showLoginMessage(keyData);
+                        return;
+                    }
+                    if (!keyData.devices || !keyData.devices[deviceId]) {
+                        addDeviceToKey(loginKey, deviceId);
+                    }
+                    localStorage.setItem('loginKey', loginKey);
+
+                    if (logoutTimerId) {
+                        clearTimeout(logoutTimerId);
+                    }
+                    const expiryTimeout = keyData.expireAt - Date.now();
+                    logoutTimerId = setTimeout(() => {
+                        showLogin();
+                        logoutTimerId = null;
+                    }, expiryTimeout);
+
+                    showLoading();
+                });
+            });
+        });
+
+        const periodNumberElement = document.getElementById('periodNumber');
+        const timerElement = document.getElementById('timer');
+        const predictionCard = document.getElementById('prediction-card');
+        const historyBody = document.getElementById('historyBody');
+        const homePage = document.getElementById('home');
+        const historyPage = document.getElementById('history');
+        const contactPage = document.getElementById('contact');
+        const timerCircleProgress = document.getElementById('timerCircleProgress');
+        const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 35;
+        if (timerCircleProgress) {
+            timerCircleProgress.style.strokeDasharray = CIRCLE_CIRCUMFERENCE;
+            timerCircleProgress.style.strokeDashoffset = CIRCLE_CIRCUMFERENCE;
+        }
+
+        const numberColors = {
+            0: 'red', 2: 'red', 4: 'red', 6: 'red', 8: 'red',
+            1: 'green', 3: 'green', 5: 'green', 7: 'green', 9: 'green'
+        };
+        const bigNumbers = [5, 6, 7, 8, 9];
+        const smallNumbers = [0, 1, 2, 3, 4];
+        const RED_NUMBERS = [0, 2, 4, 6, 8];
+        const GREEN_NUMBERS = [1, 3, 5, 7, 9];
+
+        let lastPeriodNumber = null;
+        let history = [];
+        let pendingResult = null;
+        let lastTimerUpdate = 0;
+        let winStreak = 0;
+        let lossStreak = 0;
+        let totalWins = 0;
+        let totalLosses = 0;
+        let confetti = null;
+
+        let trendAnalyzerEnabled = true;
+        let signalConfirmerEnabled = true; // Kept for structure, but toggles are removed
+
+        function toggleToolStatus(toolId) {
+            console.log(`Tool status for ${toolId} was toggled.`);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('confetti-canvas');
+            if (canvas) {
+                confetti = new JSConfetti({ canvas });
+            }
+            document.getElementById('home-btn').classList.add('active');
+            showPage('home');
+            fetchAndRenderLiveTrack();
+            setInterval(fetchAndRenderLiveTrack, 5000);
+            
+            renderPredictionCard('WAITING', ['N/A', 'N/A']);
+        });
+
+        function showPage(id) {
+            const pages = document.querySelectorAll('.page-section');
+            const navButtons = document.querySelectorAll('.nav-buttons button');
+            pages.forEach(p => p.classList.remove('active'));
+            navButtons.forEach(btn => btn.classList.remove('active'));
+
+            pages.forEach(p => p.style.transform = 'translateX(100%)');
+            document.getElementById(id).style.transform = 'translateX(0)';
+            
+            document.getElementById(id + '-btn').classList.add('active');
+        }
+
+        async function updatePeriodAndTimer() {
+            const now = new Date();
+            const currentTime = now.getTime();
+            if (currentTime - lastTimerUpdate < 1000) return;
+            lastTimerUpdate = currentTime;
+
+            const year = now.getUTCFullYear();
+            const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(now.getUTCDate()).padStart(2, '0');
+            const totalMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+            const periodNumber = `${year}${month}${day}1000${10001 + totalMinutes}`;
+            const remainingSeconds = 60 - now.getUTCSeconds();
+            
+            const percentage = remainingSeconds / 60;
+            const offset = CIRCLE_CIRCUMFERENCE * (1 - percentage);
+            
+            if (timerCircleProgress) {
+                timerCircleProgress.style.strokeDashoffset = offset;
+            }
+
+            if (lastPeriodNumber !== periodNumber) {
+                if (pendingResult && lastPeriodNumber) {
+                    await checkPendingResult(lastPeriodNumber).catch(err => console.error('Error checking pending:', err));
+                }
+                lastPeriodNumber = periodNumber;
+                periodNumberElement.textContent = periodNumber || 'N/A';
+                await generatePrediction(periodNumber); // Call the fixed logic
+            }
+
+            timerElement.textContent = `${String(remainingSeconds).padStart(2, '0')}`;
+            updateRealTimeStats();
+        }
+        setInterval(updatePeriodAndTimer, 1000);
+
+        async function fetchLastResultsFromAPI() {
+            try {
+                const response = await fetch('https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json');
+                const data = await response.json();
+                return data?.data?.list || [];
+            } catch (e) {
+                console.error('API fetch error:', e);
+                return [];
+            }
+        }
+        
+        function renderLiveTrackResults(results) {
+            if (!LIVE_TRACK_RESULTS_LIST) return;
+
+            LIVE_TRACK_RESULTS_LIST.innerHTML = '';
+
+            if (results.length === 0) {
+                LIVE_TRACK_RESULTS_LIST.innerHTML = '<li class="recent-result-item">NO RECENT RESULTS AVAILABLE</li>';
+                return;
+            }
+
+            results.forEach(result => {
+                const actualNumber = parseInt(result.number, 10);
+                const actualCategory = bigNumbers.includes(actualNumber) ? 'BIG' : (smallNumbers.includes(actualNumber) ? 'SMALL' : 'N/A');
+                const resultColor = numberColors[actualNumber];
+
+                const listItem = document.createElement('li');
+                listItem.classList.add('recent-result-item');
+                
+                listItem.innerHTML = `
+                    <div class="result-number ${resultColor}">
+                        ${actualNumber}
+                    </div>
+                    <div class="result-info">
+                        <span class="result-category">${actualCategory}</span>
+                        <span class="result-period">PERIOD: ${result.issueNumber}</span>
+                    </div>
+                `;
+                LIVE_TRACK_RESULTS_LIST.appendChild(listItem);
+            });
+        }
+        
+        async function fetchAndRenderLiveTrack() {
+            const results = await fetchLastResultsFromAPI();
+            const top3 = results.slice(0, 3);
+            renderLiveTrackResults(top3);
+        }
+
+        function renderPredictionCard(category, numbers) {
+            let categoryClass = 'wait';
+            let categoryText = 'WAITING FOR PREDICTION';
+
+            if (category === 'BIG') {
+                categoryClass = 'big';
+                categoryText = 'PREDICT: BIG';
+            } else if (category === 'SMALL') {
+                categoryClass = 'small';
+                categoryText = 'PREDICT: SMALL';
+            }
+
+            const numberBadges = numbers.map(num => {
+                const numStr = String(num);
+                let numClass = 'na-num';
+
+                if (numStr !== 'N/A' && !isNaN(parseInt(numStr, 10))) {
+                    numClass = numberColors[parseInt(numStr, 10)] + '-num';
+                }
+
+                return `<div class="predicted-number-badge ${numClass}">${numStr}</div>`;
+            }).join('');
+
+            predictionCard.innerHTML = `
+                <span class="info-card-title">PREDICTION</span> 
+                <div class="prediction-category-container ${categoryClass}">
+                    ${categoryText}
+                </div>
+                <div class="prediction-numbers-container">
+                    <div class="prediction-numbers-title">NUMBER PREDICTIONS</div>
+                    <div class="prediction-numbers">
+                        ${numberBadges}
+                    </div>
+                </div>
+            `;
+        }
+
+        function getNumbers(color, size) {
+            const colorNumbers = color === 'red' ? RED_NUMBERS : GREEN_NUMBERS;
+            const sizeNumbers = size === 'BIG' ? bigNumbers : smallNumbers;
+
+            const filtered = colorNumbers.filter(num => sizeNumbers.includes(num));
+
+            const finalNumbers = [];
+            const tempFiltered = [...filtered];
+
+            if (tempFiltered.length > 0) {
+                const index1 = Math.floor(Math.random() * tempFiltered.length);
+                finalNumbers.push(tempFiltered[index1]);
+                tempFiltered.splice(index1, 1);
+            }
+            
+            if (tempFiltered.length > 0) {
+                const index2 = Math.floor(Math.random() * tempFiltered.length);
+                finalNumbers.push(tempFiltered[index2]);
+            } else if (finalNumbers.length > 0) {
+                 finalNumbers.push(finalNumbers[0]);
+            } else {
+                 finalNumbers.push('N/A', 'N/A');
+            }
+
+            return finalNumbers.slice(0, 2).sort((a, b) => {
+                if (a === 'N/A' || b === 'N/A') return 0;
+                return a - b;
+            });
+        }
+
+
+        function checkNumberWin(predictedNumbers, actualNumber) {
+            return predictedNumbers.map(String).includes(String(actualNumber));
+        }
+
+        // --- CORE LOGIC CHANGE: ONLY MAJORITY VOTE ---
+        async function generatePrediction(period) {
+            const existingEntry = history.find(entry => entry.period === period && entry.status === 'PENDING');
+            if (existingEntry) {
+                renderPredictionCard(existingEntry.category, existingEntry.numbers);
+                return;
+            }
+
+            let predictionCategory = 'WAITING';
+            let predictedNumbers = ['N/A', 'N/A'];
+            
+            renderPredictionCard(predictionCategory, predictedNumbers);
+
+            try {
+                const recent = await fetchLastResultsFromAPI();
+                
+                if (recent.length >= 3) {
+                    // 1. Get the Big/Small result for the last 3 periods using the API data
+                    const last3 = recent.slice(0, 3).map(r => {
+                        const num = parseInt(r.number, 10);
+                        return bigNumbers.includes(num) ? 'BIG' : (smallNumbers.includes(num) ? 'SMALL' : 'N/A');
+                    }).filter(s => s !== 'N/A');
+
+                    // 2. Count the votes
+                    const counts = last3.reduce((acc, val) => {
+                        acc[val] = (acc[val] || 0) + 1;
+                        return acc;
+                    }, {});
+                    
+                    let determinedPrediction = 'WAITING';
+                    
+                    // 3. **MAJORITY VOTE LOGIC (FIXED):**
+                    if (counts['BIG'] >= 2) { // 2 Big or 3 Big
+                        determinedPrediction = 'BIG';
+                    } else if (counts['SMALL'] >= 2) { // 2 Small or 3 Small
+                        determinedPrediction = 'SMALL';
+                    }
+                    // If 1:1:1 (split 3 ways) or 2:1 (covered above)
+
+                    if (determinedPrediction !== 'WAITING') {
+                        predictionCategory = determinedPrediction;
+                        
+                        // Determine the Color for Number Prediction (using simple alternating color from the *most recent* result's color)
+                        const lastResultColor = recent[0] ? numberColors[parseInt(recent[0].number, 10)] : 'red';
+                        let predictionColor = lastResultColor === 'red' ? 'green' : 'red';
+
+                        if (trendAnalyzerEnabled) {
+                            predictedNumbers = getNumbers(predictionColor, predictionCategory);
+                        } else {
+                             predictedNumbers = ['N/A', 'N/A'];
+                        }
+                    }
+                }
+                
+                renderPredictionCard(predictionCategory, predictedNumbers);
+
+                if (predictionCategory !== 'WAITING') {
+                    history.unshift({
+                        period,
+                        category: predictionCategory,
+                        numbers: predictedNumbers,
+                        status: 'PENDING',
+                        isNumberWin: false
+                    });
+                    if (history.length > 100) {
+                        history.pop();
+                    }
+                }
+                pendingResult = history.find(entry => entry.status === 'PENDING');
+                renderHistory();
+            } catch (error) {
+                console.error("ERROR IN GENERATEPREDICTION:", error);
+                renderPredictionCard('ERROR', ['N/A', 'N/A']);
+            }
+        }
+        // --- END CORE LOGIC CHANGE ---
+
+        async function checkPendingResult(period) {
+            const entryIndex = history.findIndex(entry => entry.period === period && entry.status === 'PENDING');
+            if (entryIndex === -1) return;
+            let entry = history[entryIndex];
+            
+            const apiResultData = await fetchLastResultsFromAPI();
+            if (!apiResultData.length) return;
+            
+            const latest = apiResultData.find(result => result.issueNumber === period);
+
+            if (latest) {
+                const actualNumber = parseInt(latest.number, 10);
+                const actualCategory = bigNumbers.includes(actualNumber) ? 'BIG' : (smallNumbers.includes(actualNumber) ? 'SMALL' : 'N/A');
+
+                const isWin = entry.category === actualCategory;
+                const isNumberWin = checkNumberWin(entry.numbers, actualNumber);
+
+                entry.status = isWin ? 'WIN' : 'LOSS';
+                entry.apiCategory = actualCategory;
+                entry.apiNumber = actualNumber;
+                entry.isNumberWin = isNumberWin;
+
+                if (isWin) {
+                    winStreak++;
+                    totalWins++;
+                    lossStreak = 0;
+                    showWinAnimation();
+                    if (confetti) {
+                        document.getElementById('confetti-canvas').style.display = 'block';
+                        confetti.addConfetti({
+                            confettiRadius: 6,
+                            confettiNumber: 500,
+                            confettiColors: [
+                                '#FFD700', '#FF6347', '#5D5DFF', '#32CD32'
+                            ]
+                        }).then(() => {
+                            setTimeout(() => {
+                                document.getElementById('confetti-canvas').style.display = 'none';
+                            }, 500);
+                        });
+                    }
+                    if (isNumberWin) {
+                        showNotification('color-mode', 'WIN + JK!');
+                    } else {
+                        showNotification('win', `WIN! WIN STREAK: ${winStreak}`);
+                    }
+                } else {
+                    winStreak = 0;
+                    totalLosses++;
+                    lossStreak++;
+                    showLossAnimation();
+                    showNotification('loss', `LOSS! LOSS STREAK: ${lossStreak}`);
+                }
+                renderHistory();
+                if (pendingResult && pendingResult.period === period) {
+                    pendingResult = null;
+                }
+            }
+        }
+
+
+        function renderHistory() {
+            if (!historyBody) return;
+            
+            const renderedHistory = history.map(h => {
+                let statusClass = h.status.toLowerCase();
+                
+                let statusBadgeText = h.status;
+                let statusBadgeClass = statusClass;
+                let resultDetails = '';
+                
+                if (h.status === 'WIN' || h.status === 'LOSS') {
+                    if (h.status === 'WIN') {
+                        statusBadgeText = h.isNumberWin ? 'WIN + JK' : 'WIN';
+                        statusBadgeClass = h.isNumberWin ? 'win-jk' : 'win';
+                        statusClass = h.isNumberWin ? 'win-jk' : 'win';
+                    } else if (h.status === 'LOSS') {
+                         statusBadgeText = 'LOSS';
+                         statusBadgeClass = 'loss';
+                         statusClass = 'loss';
+                    }
+                    
+                    const actualNumber = h.apiNumber;
+                    const numberColorKey = (actualNumber !== undefined && numberColors[actualNumber]) ? numberColors[actualNumber] : null;
+                    
+                    let numberColorStyle = 'color: var(--text-muted);';
+                    if (numberColorKey) {
+                        numberColorStyle = `color: var(--${numberColorKey}-num);`;
+                    }
+                    
+                    if (h.apiCategory && actualNumber !== undefined) {
+                         resultDetails = `
+                            <span class="result-line">
+                                <i class="fas fa-check-circle"></i> RESULT: <span class="value">${h.apiCategory}</span>
+                                | NO: <span class="history-result-number" style="${numberColorStyle}">${actualNumber}</span>
+                            </span>
+                        `;
+                    }
+                    
+                } else {
+                    statusBadgeText = `<span class="pending-spinner"></span> PENDING`;
+                    statusBadgeClass = 'pending';
+                    statusClass = 'pending';
+                }
+                
+                const predictedNumbersDisplay = h.numbers.map(num => {
+                    const numStr = String(num);
+                    const numColorKey = numStr === 'N/A' || isNaN(parseInt(numStr, 10)) ? null : numberColors[parseInt(numStr, 10)];
+                    
+                    let colorStyle = 'color: var(--text-muted);';
+                    if (numColorKey) {
+                        colorStyle = `color: var(--${numColorKey}-num);`;
+                    }
+
+                    return `<span style="font-size: 1.0em; ${colorStyle}">${numStr}</span>`;
+                }).join(' / ');
+                
+                return `
+                    <div class="history-card ${statusClass}">
+                        <div class="history-content">
+                            <span class="result-period">PERIOD: <span class="value">${h.period || 'N/A'}</span></span>
+                            <span>
+                                <i class="fas fa-bullseye"></i> PREDICT: <span class="value">${h.category}</span>
+                            </span>
+                            <span class="history-prediction-details">
+                                <i class="fas fa-dice"></i> NUMBERS: ${predictedNumbersDisplay}
+                            </span>
+                            ${resultDetails}
+                        </div>
+                        <div class="history-status-badge ${statusBadgeClass}">
+                            ${statusBadgeText}
+                        </div>
+                    </div>`;
+            }).join("");
+            historyBody.innerHTML = renderedHistory;
+            historyBody.scrollTop = historyBody.scrollHeight;
+        }
+
+
+        function updateRealTimeStats() {
+            let totalBets = totalWins + totalLosses;
+            let currentWinRate = totalBets > 0 ? ((totalWins / totalBets) * 100).toFixed(2) : 0;
+            
+            const winStreakBadge = document.getElementById('win-streak-badge');
+            if (winStreak > 1) {
+                winStreakBadge.textContent = `WIN STREAK: ${winStreak}`;
+                winStreakBadge.classList.remove('hidden');
+            } else {
+                winStreakBadge.classList.add('hidden');
+            }
+        }
+
+        function clearHistory() {
+            history = [];
+            winStreak = 0;
+            lossStreak = 0;
+            totalWins = 0;
+            totalLosses = 0;
+            pendingResult = null;
+            renderHistory();
+            updateRealTimeStats();
+            showNotification('color-mode', 'HISTORY CLEARED');
+        }
+
+        function showNotification(type, message) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function showWinAnimation() {
+            predictionCard.classList.add('win-glow');
+            setTimeout(() => {
+                predictionCard.classList.remove('win-glow');
+            }, 2000);
+        }
+
+        function showLossAnimation() {
+            const body = document.body;
+            body.style.animation = 'shake 0.5s';
+            setTimeout(() => {
+                body.style.animation = '';
+            }, 500);
+        }
+    </script>
+</body>
+</html>
